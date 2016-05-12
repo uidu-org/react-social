@@ -46,39 +46,33 @@
     window[callback] = cb;
   };
 
+  var windowOpen = function(url, name, height = 400, width = 550) {
+    var left = (window.outerWidth / 2)
+      + (window.screenX || window.screenLeft || 0) - (width / 2);
+    var top = (window.outerHeight / 2)
+      + (window.screenY || window.screenTop || 0) - (height / 2);
 
-  /* Caputre VKontake callbacks */
-  var vkCallbacks = {};
-
-  var hookVKCallback = function () {
-    if (!isBrowser()) { return; }
-
-    if (!window.VK) {
-      window.VK = {};
-    }
-
-    if (!window.VK.Share) {
-      window.VK.Share = {};
-    }
-
-    var oldCount = window.VK.Share.count;
-
-    window.VK.Share.count = function (index, count) {
-      if (typeof vkCallbacks[index] === "function") {
-        return vkCallbacks[index](count);
-      }
-
-      if (typeof oldCount === "function") {
-        oldCount(index, count);
-      }
+    var config = {
+      height,
+      width,
+      left,
+      top,
+      location: 'no',
+      toolbar: 'no',
+      status: 'no',
+      directories: 'no',
+      menubar: 'no',
+      scrollbars: 'yes',
+      resizable: 'no',
+      centerscreen: 'yes',
+      chrome: 'yes',
     };
+
+    return window.open(
+      url, name, Object.keys(config).map(key => `${key}=${config[key]}`).join(', ')
+    )
   };
 
-  var captureVKCallback = function (index, cb) {
-    vkCallbacks[index] = cb;
-  };
-
-  hookVKCallback();
 
   var exports = {};
 
@@ -197,7 +191,7 @@
           var target = "_blank"
         }
 
-        window.open(url, target);
+        windowOpen(url, target, );
       }
     }
 
@@ -241,19 +235,6 @@
     }
   });
 
-  exports.PinterestCount = React.createClass({
-    mixins: [Count]
-
-    , constructUrl: function () {
-      return "https://api.pinterest.com/v1/urls/count.json?callback=@&url="
-             + encodeURIComponent(this.props.url);
-    }
-
-    , extractCount: function (data) {
-      return data.count || 0;
-    }
-  });
-
   exports.LinkedInCount = React.createClass({
     mixins: [Count]
 
@@ -263,36 +244,6 @@
 
     , extractCount: function (data) {
       return data.count || 0;
-    }
-  });
-
-  exports.RedditCount = React.createClass({
-    mixins: [Count]
-
-    , constructUrl: function () {
-      return "https://www.reddit.com/api/info.json?jsonp=@&url=" + encodeURIComponent(this.props.url);
-    }
-
-    , extractCount: function (data) {
-      var count = 0;
-      var chs = data.data.children;
-
-      for (var i = 0; i < chs.length; i++) {
-        count += chs[i].data.score;
-      }
-
-      return count;
-    }
-  });
-
-  exports.VKontakteCount = React.createClass({
-    mixins: [Count]
-
-    , fetchCount: function (cb) {
-      var index = Math.floor(Math.random() * 10000)
-      var url = "https://vkontakte.ru/share.php?act=count&index=" + index + "&url=" + encodeURIComponent(this.props.url);
-      captureVKCallback(index, cb);
-      jsonp(url);
     }
   });
 
@@ -338,43 +289,11 @@
     }
   });
 
-  exports.PinterestButton = React.createClass({
-    mixins: [Button]
-
-    , propTypes: {
-      media: React.PropTypes.string.isRequired
-    }
-
-    , constructUrl: function () {
-      var url = "https://pinterest.com/pin/create/button/?url="
-                + encodeURIComponent(this.props.url) + "&media="
-                + encodeURIComponent(this.props.media) + "&description="
-                + encodeURIComponent(this.props.message);
-      return url;
-    }
-  });
-
-  exports.VKontakteButton = React.createClass({
-      mixins: [Button]
-
-    , constructUrl: function () {
-        return "http://vk.com/share.php?url=" + encodeURIComponent(this.props.url);
-    }
-  });
-
   exports.GooglePlusButton = React.createClass({
       mixins: [Button]
 
     , constructUrl: function () {
         return "https://plus.google.com/share?url=" + encodeURIComponent(this.props.url);
-    }
-  });
-
-  exports.RedditButton = React.createClass({
-      mixins: [Button]
-
-    , constructUrl: function () {
-        return "https://www.reddit.com/submit?url=" + encodeURIComponent(this.props.url);
     }
   });
 
