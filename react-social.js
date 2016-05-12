@@ -156,10 +156,7 @@
           _self.setState({
             count: _self.extractCount(data)
           });
-        },
-        onTimeout: function(){
-            console.log('timeout!');
-        },
+        }
       })
       // jsonp(url, function (data) {
       //   this.setState({
@@ -259,7 +256,7 @@
     }
 
     , extractCount: function (data) {
-      return data.shares.google;
+      return data.shares && data.shares.google;
     }
   });
 
