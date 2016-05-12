@@ -31,20 +31,38 @@
     return clone;
   };
 
-  var jsonp = function (url, cb) {
-    var now = +new Date(),
-      id = now + "_" + Math.floor(Math.random()*1000);
+  var $jsonp = (function(){
+    var that = {};
 
-    var script = document.createElement("script"),
-      callback = "jsonp_" + id,
-      query = url.replace("@", callback);
+    that.send = function(src, options) {
+      var options = options || {},
+        callback_name = options.callbackName || 'callback',
+        query = src.replace("@", callback_name),
+        on_success = options.onSuccess || function(){},
+        on_timeout = options.onTimeout || function(){},
+        timeout = options.timeout || 10;
 
-    script.setAttribute("type", "text/javascript");
-    script.setAttribute("src", query);
-    document.body.appendChild(script);
+      var timeout_trigger = window.setTimeout(function(){
+        window[callback_name] = function(){};
+        on_timeout();
+      }, timeout * 1000);
 
-    window[callback] = cb;
-  };
+      window[callback_name] = function(data){
+        window.clearTimeout(timeout_trigger);
+        on_success(data);
+      };
+
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.async = true;
+      script.src = query;
+
+      document.getElementsByTagName('head')[0].appendChild(script);
+    };
+
+    return that;
+  })();
+
 
   var windowOpen = function(url, name, height = 400, width = 550) {
     var left = (window.outerWidth / 2)
@@ -131,13 +149,23 @@
         }.bind(this));
       }
 
-      var url = this.constructUrl();
-
-      jsonp(url, function (data) {
-        this.setState({
-          count: this.extractCount(data)
-        });
-      }.bind(this));
+      var url = this.constructUrl(),
+          _self = this;
+      $jsonp.send(url, {
+        onSuccess: function(data){
+          _self.setState({
+            count: _self.extractCount(data)
+          });
+        },
+        onTimeout: function(){
+            console.log('timeout!');
+        },
+      })
+      // jsonp(url, function (data) {
+      //   this.setState({
+      //     count: this.extractCount(data)
+      //   });
+      // }.bind(this));
     }
 
     , getCount: function () {

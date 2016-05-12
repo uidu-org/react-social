@@ -52,20 +52,8 @@ test("GooglePlusCount", function (t) {
   t.plan(testCount(t, ReactSocial.GooglePlusCount));
 });
 
-test("PinterestCount", function (t) {
-  t.plan(testCount(t, ReactSocial.PinterestCount));
-});
-
 test("LinkedInCount", function (t) {
   t.plan(testCount(t, ReactSocial.LinkedInCount));
-});
-
-test("RedditCount", function (t) {
-  t.plan(testCount(t, ReactSocial.RedditCount));
-});
-
-test("VKontakteCount", function (t) {
-  t.plan(testCount(t, ReactSocial.VKontakteCount));
 });
 
 // Buttons
@@ -81,20 +69,8 @@ test("GooglePlusButton", function (t) {
   t.plan(testButton(t, ReactSocial.GooglePlusButton));
 });
 
-test("PinterestButton", function (t) {
-  t.plan(testButton(t, ReactSocial.PinterestButton));
-});
-
 test("LinkedInButton", function (t) {
   t.plan(testButton(t, ReactSocial.LinkedInButton));
-});
-
-test("RedditButton", function (t) {
-  t.plan(testButton(t, ReactSocial.RedditButton));
-});
-
-test("VKontakteButton", function (t) {
-  t.plan(testButton(t, ReactSocial.VKontakteButton));
 });
 
 test("EmailButton", function (t) {
