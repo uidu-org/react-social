@@ -31,12 +31,28 @@
     return clone;
   };
 
+  // var jsonp = function (url, cb) {
+  //   var now = +new Date(),
+  //     id = now + "_" + Math.floor(Math.random()*1000);
+
+  //   var script = document.createElement("script"),
+  //     callback = "jsonp_" + id,
+  //     query = url.replace("@", callback);
+
+  //   script.setAttribute("type", "text/javascript");
+  //   script.setAttribute("src", query);
+  //   document.body.appendChild(script);
+
+  //   window[callback] = cb;
+  // };
   var $jsonp = (function(){
     var that = {};
 
     that.send = function(src, options) {
       var options = options || {},
-        callback_name = options.callbackName || 'callback',
+        now = +new Date(),
+        id = now + "_" + Math.floor(Math.random() * 1000),
+        callback_name = options.callbackName || "callback",
         query = src.replace("@", callback_name),
         on_success = options.onSuccess || function(){},
         on_timeout = options.onTimeout || function(){},
@@ -59,7 +75,6 @@
 
       document.getElementsByTagName('head')[0].appendChild(script);
     };
-
     return that;
   })();
 
@@ -152,12 +167,35 @@
       var url = this.constructUrl(),
           _self = this;
       $jsonp.send(url, {
+        callbackName: _self.getName(),
         onSuccess: function(data){
           _self.setState({
             count: _self.extractCount(data)
           });
-        }
+        },
+        onTimeout: function(){
+            console.log('timeout!');
+        },
       })
+      // $.ajax({
+      //   url: url,
+      //   jsonp: "callback",
+      //   success: function(data) {
+      //     this.setState({
+      //       count: this.extractCount(data)
+      //     });
+      //   }
+      // })
+      // .done(function() {
+      //   console.log("success");
+      // })
+      // .fail(function() {
+      //   console.log("error");
+      // })
+      // .always(function() {
+      //   console.log("complete");
+      // });
+
       // jsonp(url, function (data) {
       //   this.setState({
       //     count: this.extractCount(data)
@@ -241,7 +279,12 @@
       return url;
     }
 
+    , getName: function() {
+      return 'facebook'
+    }
+
     , extractCount: function (data) {
+      console.log(data)
       if (!data[0]) { return 0; }
 
       return data[0].like_count + data[0].share_count;
@@ -255,8 +298,13 @@
       return "https://count.donreach.com/?callback=@&url=" + encodeURIComponent(this.props.url);
     }
 
+    , getName: function() {
+      return 'google'
+    }
+
     , extractCount: function (data) {
-      return data.shares && data.shares.google;
+      console.log(data)
+      return data.shares.google;
     }
   });
 
@@ -267,7 +315,12 @@
       return "https://www.linkedin.com/countserv/count/share?url=" + encodeURIComponent(this.props.url) + "&callback=@&format=jsonp";
     }
 
+    , getName: function() {
+      return 'linkedin'
+    }
+
     , extractCount: function (data) {
+      console.log(data)
       return data.count || 0;
     }
   });
