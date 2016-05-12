@@ -191,7 +191,7 @@
           var target = "_blank"
         }
 
-        windowOpen(url, target, );
+        windowOpen(url, 'foo');
       }
     }
 
