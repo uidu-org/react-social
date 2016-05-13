@@ -76,7 +76,9 @@ var windowOpen = function(url, name, height = 400, width = 550) {
   };
 
   return window.open(
-    url, name, Object.keys(config).map(key => `${key}=${config[key]}`).join(', ')
+    url, name, Object.keys(config).map(function(key){
+      return '' + key + '=' + config[key] + '';
+    }).join(', ')
   )
 };
 
