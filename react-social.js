@@ -1,387 +1,333 @@
-;(function (root, factory) {
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = factory(require("react"));
-  } else if (typeof define === "function" && define.amd) {
-    define(["react"], factory);
-  } else {
-    root.ReactSocial = factory(root.React);
+var isBrowser = function () {
+  return !(typeof document === "undefined" || typeof window === "undefined");
+};
+
+var assign = function(dest, src) {
+  for (var key in src) {
+    dest[key] = src[key];
   }
-})(this, function (React) {
-  "use strict";
 
-  var isBrowser = function () {
-    return !(typeof document === "undefined" || typeof window === "undefined");
-  };
+  return dest;
+};
 
-  var assign = function(dest, src) {
-    for (var key in src) {
-      dest[key] = src[key];
-    }
+var spread = function (obj, omit) {
+  var clone = assign({}, obj);
 
-    return dest;
-  };
+  omit.forEach(function (key) {
+    delete clone[key];
+  });
 
-  var spread = function (obj, omit) {
-    var clone = assign({}, obj);
+  return clone;
+};
 
-    omit.forEach(function (key) {
-      delete clone[key];
-    });
+var $jsonp = (function(){
+  var that = {};
 
-    return clone;
-  };
+  that.send = function(src, options) {
+    var options = options || {},
+      now = +new Date(),
+      id = now + "_" + Math.floor(Math.random() * 1000),
+      callback_name = options.callbackName || "callback",
+      query = src.replace("@", callback_name),
+      on_success = options.onSuccess || function(){},
+      on_timeout = options.onTimeout || function(){},
+      timeout = options.timeout || 10;
 
-  // var jsonp = function (url, cb) {
-  //   var now = +new Date(),
-  //     id = now + "_" + Math.floor(Math.random()*1000);
+    var timeout_trigger = window.setTimeout(function(){
+      window[callback_name] = function(){};
+      on_timeout();
+    }, timeout * 1000);
 
-  //   var script = document.createElement("script"),
-  //     callback = "jsonp_" + id,
-  //     query = url.replace("@", callback);
-
-  //   script.setAttribute("type", "text/javascript");
-  //   script.setAttribute("src", query);
-  //   document.body.appendChild(script);
-
-  //   window[callback] = cb;
-  // };
-  var $jsonp = (function(){
-    var that = {};
-
-    that.send = function(src, options) {
-      var options = options || {},
-        now = +new Date(),
-        id = now + "_" + Math.floor(Math.random() * 1000),
-        callback_name = options.callbackName || "callback",
-        query = src.replace("@", callback_name),
-        on_success = options.onSuccess || function(){},
-        on_timeout = options.onTimeout || function(){},
-        timeout = options.timeout || 10;
-
-      var timeout_trigger = window.setTimeout(function(){
-        window[callback_name] = function(){};
-        on_timeout();
-      }, timeout * 1000);
-
-      window[callback_name] = function(data){
-        window.clearTimeout(timeout_trigger);
-        on_success(data);
-      };
-
-      var script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.async = true;
-      script.src = query;
-
-      document.getElementsByTagName('head')[0].appendChild(script);
-    };
-    return that;
-  })();
-
-
-  var windowOpen = function(url, name, height = 400, width = 550) {
-    var left = (window.outerWidth / 2)
-      + (window.screenX || window.screenLeft || 0) - (width / 2);
-    var top = (window.outerHeight / 2)
-      + (window.screenY || window.screenTop || 0) - (height / 2);
-
-    var config = {
-      height,
-      width,
-      left,
-      top,
-      location: 'no',
-      toolbar: 'no',
-      status: 'no',
-      directories: 'no',
-      menubar: 'no',
-      scrollbars: 'yes',
-      resizable: 'no',
-      centerscreen: 'yes',
-      chrome: 'yes',
+    window[callback_name] = function(data){
+      window.clearTimeout(timeout_trigger);
+      on_success(data);
     };
 
-    return window.open(
-      url, name, Object.keys(config).map(key => `${key}=${config[key]}`).join(', ')
-    )
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = true;
+    script.src = query;
+
+    document.getElementsByTagName('head')[0].appendChild(script);
+  };
+  return that;
+})();
+
+var windowOpen = function(url, name, height = 400, width = 550) {
+  var left = (window.outerWidth / 2)
+    + (window.screenX || window.screenLeft || 0) - (width / 2);
+  var top = (window.outerHeight / 2)
+    + (window.screenY || window.screenTop || 0) - (height / 2);
+
+  var config = {
+    height,
+    width,
+    left,
+    top,
+    location: 'no',
+    toolbar: 'no',
+    status: 'no',
+    directories: 'no',
+    menubar: 'no',
+    scrollbars: 'yes',
+    resizable: 'no',
+    centerscreen: 'yes',
+    chrome: 'yes',
   };
 
+  return window.open(
+    url, name, Object.keys(config).map(key => `${key}=${config[key]}`).join(', ')
+  )
+};
 
-  var exports = {};
 
-  var Count = {
-    propTypes: {
-      element: React.PropTypes.string
-      , url: React.PropTypes.string
+var ReactSocial = {};
+
+var ReactSocial.Count = {
+  propTypes: {
+    element: React.PropTypes.string,
+    url: React.PropTypes.string
+  },
+
+  getDefaultProps: function () {
+    var location = "";
+
+    if (isBrowser()) {
+      location = window.location.href;
     }
 
-    , getDefaultProps: function () {
-      var location = "";
+    return {
+      url: location,
+      element: "span",
+      onCount: function () { }
+    };
+  },
 
-      if (isBrowser()) {
-        location = window.location.href;
-      }
+  getInitialState: function () {
+    return {
+      count: 0
+    };
+  },
 
-      return {
-        url: location
-        , element: "span"
-        , onCount: function () { }
-      };
-    }
+  componentWillMount: function () {
+    this.updateCount();
+  },
 
-    , getInitialState: function () {
-      return {
+  componentWillReceiveProps: function (nextProps) {
+    if (this.props.url !== nextProps.url) {
+      this.setState({
         count: 0
-      };
+      }, function () {
+        this.updateCount();
+      });
+    }
+  },
+
+  componentDidUpdate: function () {
+    this.props.onCount(this.state.count);
+  },
+
+  updateCount: function () {
+    if (!isBrowser()) {
+      return ;
     }
 
-    , componentWillMount: function () {
-      this.updateCount();
+    if (typeof this.fetchCount === "function") {
+      return this.fetchCount(function (count) {
+        this.setState({ count: count });
+      }.bind(this));
     }
 
-    , componentWillReceiveProps: function (nextProps) {
-      if (this.props.url !== nextProps.url) {
-        this.setState({
-          count: 0
-        }, function () {
-          this.updateCount();
+    var url = this.constructUrl(),
+        _self = this;
+    $jsonp.send(url, {
+      callbackName: _self.getName(),
+      onSuccess: function(data){
+        _self.setState({
+          count: _self.extractCount(data)
         });
-      }
+      },
+      onTimeout: function(){
+        console.log('timeout!');
+      },
+    })
+  },
+
+  getCount: function () {
+    return this.state.count;
+  },
+
+  render: function () {
+    return (
+      <this.props.element {...this.props}>
+        {this.state.count}
+      </this.props.element>
+    )
+  }
+};
+
+var ReactSocial.Button = {
+  propTypes: {
+    element: React.PropTypes.string,
+    url: React.PropTypes.string,
+    media: React.PropTypes.string,
+    message: React.PropTypes.string,
+    onClick: React.PropTypes.func
+  },
+
+  getDefaultProps: function () {
+    var location = "";
+
+    if (isBrowser()) {
+      location = window.location.href;
     }
 
-    , componentDidUpdate: function () {
-      this.props.onCount(this.state.count);
-    }
+    return {
+      element: "button",
+      url: location,
+      media: "",
+      message: "",
+      onClick: function () { }
+    };
+  },
 
-    , updateCount: function () {
-      if (!isBrowser()) {
-        return ;
-      }
+  click: function (e) {
+    this.props.onClick(e);
+    if (isBrowser()) {
+      var result = this.constructUrl();
 
-      if (typeof this.fetchCount === "function") {
-        return this.fetchCount(function (count) {
-          this.setState({ count: count });
-        }.bind(this));
-      }
-
-      var url = this.constructUrl(),
-          _self = this;
-      $jsonp.send(url, {
-        callbackName: _self.getName(),
-        onSuccess: function(data){
-          _self.setState({
-            count: _self.extractCount(data)
-          });
-        },
-        onTimeout: function(){
-            console.log('timeout!');
-        },
-      })
-      // $.ajax({
-      //   url: url,
-      //   jsonp: "callback",
-      //   success: function(data) {
-      //     this.setState({
-      //       count: this.extractCount(data)
-      //     });
-      //   }
-      // })
-      // .done(function() {
-      //   console.log("success");
-      // })
-      // .fail(function() {
-      //   console.log("error");
-      // })
-      // .always(function() {
-      //   console.log("complete");
-      // });
-
-      // jsonp(url, function (data) {
-      //   this.setState({
-      //     count: this.extractCount(data)
-      //   });
-      // }.bind(this));
-    }
-
-    , getCount: function () {
-      return this.state.count;
-    }
-
-    , render: function () {
-      return React.createElement(
-        this.props.element
-        , spread(this.props, ["element", "url"])
-        , this.state.count
-      );
-    }
-  };
-
-  var Button = {
-    propTypes: {
-      element: React.PropTypes.string
-      , url: React.PropTypes.string
-      , media: React.PropTypes.string
-      , message: React.PropTypes.string
-      , onClick: React.PropTypes.func
-    }
-
-    , getDefaultProps: function () {
-      var location = "";
-
-      if (isBrowser()) {
-        location = window.location.href;
+      if (typeof result === "object") {
+        var url = result[0]
+        var target = result[1]
+      } else {
+        var url = result
+        var target = "_blank"
       }
 
-      return {
-        element: "button"
-        , url: location
-        , media: ""
-        , message: ""
-        , onClick: function () { }
-      };
+      windowOpen(url, 'foo');
     }
+  },
 
-    , click: function (e) {
-      this.props.onClick(e);
-      if (isBrowser()) {
-        var result = this.constructUrl();
+  render: function () {
 
-        if (typeof result === "object") {
-          var url = result[0]
-          var target = result[1]
-        } else {
-          var url = result
-          var target = "_blank"
-        }
+    return (
+      <this.props.element {...this.props} onClick={this.click}>
+      </this.props.element>
+    )
+  }
+};
 
-        windowOpen(url, 'foo');
-      }
-    }
+/* Counts */
+ReactSocial.FacebookCount = React.createClass({
+  mixins: [Count]
 
-    , render: function () {
-      var other = spread(this.props, ["onClick", "element", "url"]);
+  , constructUrl: function () {
+    var fql = encodeURIComponent("select like_count, share_count from link_stat where url = '" + this.props.url + "'")
+      , url = "https://api.facebook.com/method/fql.query?format=json&callback=@&query=" + fql;
 
-      return React.createElement(
-        this.props.element
-        , assign({ "onClick": this.click }, other)
-      );
-    }
-  };
+    return url;
+  }
 
-  /* Counts */
-  exports.FacebookCount = React.createClass({
-    mixins: [Count]
+  , getName: function() {
+    return 'facebook'
+  }
 
-    , constructUrl: function () {
-      var fql = encodeURIComponent("select like_count, share_count from link_stat where url = '" + this.props.url + "'")
-        , url = "https://api.facebook.com/method/fql.query?format=json&callback=@&query=" + fql;
+  , extractCount: function (data) {
+    console.log(data)
+    if (!data[0]) { return 0; }
 
-      return url;
-    }
+    return data[0].like_count + data[0].share_count;
+  }
+});
 
-    , getName: function() {
-      return 'facebook'
-    }
+ReactSocial.GooglePlusCount = React.createClass({
+  mixins: [Count]
 
-    , extractCount: function (data) {
-      console.log(data)
-      if (!data[0]) { return 0; }
+  , constructUrl: function () {
+    return "https://count.donreach.com/?callback=@&url=" + encodeURIComponent(this.props.url);
+  }
 
-      return data[0].like_count + data[0].share_count;
-    }
-  });
+  , getName: function() {
+    return 'google'
+  }
 
-  exports.GooglePlusCount = React.createClass({
-    mixins: [Count]
+  , extractCount: function (data) {
+    console.log(data)
+    return data.shares.google;
+  }
+});
 
-    , constructUrl: function () {
-      return "https://count.donreach.com/?callback=@&url=" + encodeURIComponent(this.props.url);
-    }
+ReactSocial.LinkedInCount = React.createClass({
+  mixins: [Count]
 
-    , getName: function() {
-      return 'google'
-    }
+  , constructUrl: function () {
+    return "https://www.linkedin.com/countserv/count/share?url=" + encodeURIComponent(this.props.url) + "&callback=@&format=jsonp";
+  }
 
-    , extractCount: function (data) {
-      console.log(data)
-      return data.shares.google;
-    }
-  });
+  , getName: function() {
+    return 'linkedin'
+  }
 
-  exports.LinkedInCount = React.createClass({
-    mixins: [Count]
+  , extractCount: function (data) {
+    console.log(data)
+    return data.count || 0;
+  }
+});
 
-    , constructUrl: function () {
-      return "https://www.linkedin.com/countserv/count/share?url=" + encodeURIComponent(this.props.url) + "&callback=@&format=jsonp";
-    }
+/* Buttons */
+ReactSocial.FacebookButton = React.createClass({
+  mixins: [Button]
 
-    , getName: function() {
-      return 'linkedin'
-    }
+  , propTypes: {
+    appId: React.PropTypes.oneOfType([
+      React.PropTypes.string,
+      React.PropTypes.number
+    ])
+  }
 
-    , extractCount: function (data) {
-      console.log(data)
-      return data.count || 0;
-    }
-  });
+  , constructUrl: function () {
+    return "https://www.facebook.com/dialog/feed?"
+           + "app_id=" + encodeURIComponent(this.props.appId)
+           + "&display=popup&caption=" + encodeURIComponent(this.props.message)
+           + "&link=" + encodeURIComponent(this.props.url)
+           + "&redirect_uri=" + encodeURIComponent("https://www.facebook.com/")
+  }
+});
 
-  /* Buttons */
-  exports.FacebookButton = React.createClass({
+ReactSocial.TwitterButton = React.createClass({
+  mixins: [Button]
+
+  , constructUrl: function () {
+    var msg = this.props.message === "" ?
+      this.props.url : this.props.message + " " + this.props.url;
+    return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(msg);
+  }
+});
+
+ReactSocial.EmailButton = React.createClass({
+  mixins: [Button]
+
+  , constructUrl: function () {
+    return [
+      "mailto:?subject=" + encodeURIComponent(this.props.message)
+           + "&body=" + encodeURIComponent(this.props.url),
+      "_self"
+    ]
+  }
+});
+
+ReactSocial.GooglePlusButton = React.createClass({
     mixins: [Button]
 
-    , propTypes: {
-      appId: React.PropTypes.oneOfType([
-        React.PropTypes.string,
-        React.PropTypes.number
-      ])
-    }
+  , constructUrl: function () {
+      return "https://plus.google.com/share?url=" + encodeURIComponent(this.props.url);
+  }
+});
 
-    , constructUrl: function () {
-      return "https://www.facebook.com/dialog/feed?"
-             + "app_id=" + encodeURIComponent(this.props.appId)
-             + "&display=popup&caption=" + encodeURIComponent(this.props.message)
-             + "&link=" + encodeURIComponent(this.props.url)
-             + "&redirect_uri=" + encodeURIComponent("https://www.facebook.com/")
-    }
-  });
+ReactSocial.LinkedInButton = React.createClass({
+  mixins: [Button]
 
-  exports.TwitterButton = React.createClass({
-    mixins: [Button]
-
-    , constructUrl: function () {
-      var msg = this.props.message === "" ?
-        this.props.url : this.props.message + " " + this.props.url;
-      return "https://twitter.com/intent/tweet?text=" + encodeURIComponent(msg);
-    }
-  });
-
-  exports.EmailButton = React.createClass({
-    mixins: [Button]
-
-    , constructUrl: function () {
-      return [
-        "mailto:?subject=" + encodeURIComponent(this.props.message)
-             + "&body=" + encodeURIComponent(this.props.url),
-        "_self"
-      ]
-    }
-  });
-
-  exports.GooglePlusButton = React.createClass({
-      mixins: [Button]
-
-    , constructUrl: function () {
-        return "https://plus.google.com/share?url=" + encodeURIComponent(this.props.url);
-    }
-  });
-
-  exports.LinkedInButton = React.createClass({
-    mixins: [Button]
-
-    , constructUrl: function () {
-      return "https://www.linkedin.com/shareArticle?url=" + encodeURIComponent(this.props.url);
-    }
-  });
-
-  return exports;
+  , constructUrl: function () {
+    return "https://www.linkedin.com/shareArticle?url=" + encodeURIComponent(this.props.url);
+  }
 });
