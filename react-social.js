@@ -83,7 +83,7 @@ var windowOpen = function(url, name, height = 400, width = 550) {
 
 var ReactSocial = {};
 
-ReactSocial.Count = {
+var ReactSocial.Count = {
   propTypes: {
     element: React.PropTypes.string,
     url: React.PropTypes.string
@@ -148,7 +148,7 @@ ReactSocial.Count = {
         });
       },
       onTimeout: function(){
-        console.log('timeout!');
+          console.log('timeout!');
       },
     })
   },
@@ -158,15 +158,15 @@ ReactSocial.Count = {
   },
 
   render: function () {
-    return (
-      <this.props.element {...this.props}>
-        {this.state.count}
-      </this.props.element>
-    )
+    return React.createElement(
+      this.props.element
+      , spread(this.props, ["element", "url"])
+      , this.state.count
+    );
   }
 };
 
-ReactSocial.Button = {
+var ReactSocial.Button = {
   propTypes: {
     element: React.PropTypes.string,
     url: React.PropTypes.string,
@@ -209,11 +209,12 @@ ReactSocial.Button = {
   },
 
   render: function () {
+    var other = spread(this.props, ["onClick", "element", "url"]);
 
-    return (
-      <this.props.element {...this.props} onClick={this.click}>
-      </this.props.element>
-    )
+    return React.createElement(
+      this.props.element
+      , assign({ "onClick": this.click }, other)
+    );
   }
 };
 
