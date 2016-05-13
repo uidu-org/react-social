@@ -83,7 +83,7 @@ var windowOpen = function(url, name, height = 400, width = 550) {
 
 var ReactSocial = {};
 
-var ReactSocial.Count = {
+ReactSocial.Count = {
   propTypes: {
     element: React.PropTypes.string,
     url: React.PropTypes.string
@@ -166,7 +166,7 @@ var ReactSocial.Count = {
   }
 };
 
-var ReactSocial.Button = {
+ReactSocial.Button = {
   propTypes: {
     element: React.PropTypes.string,
     url: React.PropTypes.string,
