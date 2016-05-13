@@ -220,7 +220,7 @@ ReactSocial.Button = {
 
 /* Counts */
 ReactSocial.FacebookCount = React.createClass({
-  mixins: [Count]
+  mixins: [ReactSocial.Count]
 
   , constructUrl: function () {
     var fql = encodeURIComponent("select like_count, share_count from link_stat where url = '" + this.props.url + "'")
@@ -242,7 +242,7 @@ ReactSocial.FacebookCount = React.createClass({
 });
 
 ReactSocial.GooglePlusCount = React.createClass({
-  mixins: [Count]
+  mixins: [ReactSocial.Count]
 
   , constructUrl: function () {
     return "https://count.donreach.com/?callback=@&url=" + encodeURIComponent(this.props.url);
@@ -259,7 +259,7 @@ ReactSocial.GooglePlusCount = React.createClass({
 });
 
 ReactSocial.LinkedInCount = React.createClass({
-  mixins: [Count]
+  mixins: [ReactSocial.Count]
 
   , constructUrl: function () {
     return "https://www.linkedin.com/countserv/count/share?url=" + encodeURIComponent(this.props.url) + "&callback=@&format=jsonp";
@@ -277,7 +277,7 @@ ReactSocial.LinkedInCount = React.createClass({
 
 /* Buttons */
 ReactSocial.FacebookButton = React.createClass({
-  mixins: [Button]
+  mixins: [ReactSocial.Button]
 
   , propTypes: {
     appId: React.PropTypes.oneOfType([
@@ -296,7 +296,7 @@ ReactSocial.FacebookButton = React.createClass({
 });
 
 ReactSocial.TwitterButton = React.createClass({
-  mixins: [Button]
+  mixins: [ReactSocial.Button]
 
   , constructUrl: function () {
     var msg = this.props.message === "" ?
@@ -306,7 +306,7 @@ ReactSocial.TwitterButton = React.createClass({
 });
 
 ReactSocial.EmailButton = React.createClass({
-  mixins: [Button]
+  mixins: [ReactSocial.Button]
 
   , constructUrl: function () {
     return [
@@ -318,7 +318,7 @@ ReactSocial.EmailButton = React.createClass({
 });
 
 ReactSocial.GooglePlusButton = React.createClass({
-    mixins: [Button]
+    mixins: [ReactSocial.Button]
 
   , constructUrl: function () {
       return "https://plus.google.com/share?url=" + encodeURIComponent(this.props.url);
@@ -326,7 +326,7 @@ ReactSocial.GooglePlusButton = React.createClass({
 });
 
 ReactSocial.LinkedInButton = React.createClass({
-  mixins: [Button]
+  mixins: [ReactSocial.Button]
 
   , constructUrl: function () {
     return "https://www.linkedin.com/shareArticle?url=" + encodeURIComponent(this.props.url);
